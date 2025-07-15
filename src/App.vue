@@ -1,10 +1,9 @@
-<script setup lang="ts">
-// Composant racine de l'application
-</script>
-
 <template>
-  <router-view />
+  <MainLayout>
+    <router-view />
+  </MainLayout>
 </template>
 
-<style>
-</style>
+<script setup lang="ts">
+import MainLayout from './layouts/MainLayout.vue';
+</script>
