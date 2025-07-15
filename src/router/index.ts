@@ -1,25 +1,20 @@
-import { createRouter, createWebHistory } from 'vue-router'
-import type { RouteRecordRaw } from 'vue-router'
-import MainLayout from '../layouts/MainLayout.vue'
+import { createRouter, createWebHistory } from "vue-router";
 
-// Routes des modules
-const routes: Array<RouteRecordRaw> = [
-  {
-    path: '/',
-    component: MainLayout,
-    children: [
-      {
-        path: '',
-        name: 'Home',
-        component: () => import('../views/HomeView.vue')
-      }
-    ]
-  }
-]
+import HomeView from "../views/HomeView.vue";
+import UsersView from "../views/UsersView.vue";
+import ArticlesView from "../views/ArticlesView.vue";
+import OrdersView from "../views/OrdersView.vue";
+
+const routes = [
+  { path: "/", name: "Home", component: HomeView },
+  { path: "/articles", name: "Articles", component: ArticlesView },
+  { path: "/orders", name: "Orders", component: OrdersView },
+  { path: "/users", name: "Users", component: UsersView },
+];
 
 const router = createRouter({
   history: createWebHistory(),
-  routes
-})
+  routes,
+});
 
-export default router 
+export default router;
