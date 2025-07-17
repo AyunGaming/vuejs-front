@@ -33,7 +33,7 @@
 
         <p class="text-sm text-gray-500 mb-4">Stock disponible : {{ maxQuantity }}</p>
 
-        <button @click="confirmAddToCart"
+        <button @click.stop="confirmAddToCart"
           class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 disabled:opacity-50"
           :disabled="quantity < 1 || quantity > maxQuantity">
           Ajouter {{ quantity }} au panier

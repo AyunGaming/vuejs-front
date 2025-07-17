@@ -15,6 +15,30 @@
                 <input id="email" v-model="email" type="email" required class="border p-2 w-full rounded" />
             </div>
 
+            <fieldset class="border p-4 rounded space-y-3">
+                <legend class="font-semibold mb-2">Adresse de facturation</legend>
+                <div>
+                    <label for="billingStreet" class="block mb-1">N° + Rue</label>
+                    <input id="billingStreet" v-model="billingAddress.street" type="text" required
+                        class="border p-2 w-full rounded" />
+                </div>
+                <div>
+                    <label for="billingCity" class="block mb-1">Ville</label>
+                    <input id="billingCity" v-model="billingAddress.city" type="text" required
+                        class="border p-2 w-full rounded" />
+                </div>
+                <div>
+                    <label for="billingPostalCode" class="block mb-1">Code postal</label>
+                    <input id="billingPostalCode" v-model="billingAddress.postalCode" type="text" required
+                        class="border p-2 w-full rounded" />
+                </div>
+                <div>
+                    <label for="billingCountry" class="block mb-1">Pays</label>
+                    <input id="billingCountry" v-model="billingAddress.country" type="text" required
+                        class="border p-2 w-full rounded" />
+                </div>
+            </fieldset>
+
             <button type="submit" class="w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700">
                 Enregistrer les modifications
             </button>
@@ -30,7 +54,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import axios from 'axios'
 import { useAuthStore } from '@/store/auth'
 import { useRouter } from 'vue-router'
@@ -41,6 +65,13 @@ const email = ref('')
 const error = ref('')
 const success = ref('')
 
+const billingAddress = reactive({
+    street: '',
+    city: '',
+    postalCode: '',
+    country: ''
+})
+
 const token = localStorage.getItem('token')
 const router = useRouter()
 const auth = useAuthStore()
@@ -49,13 +80,15 @@ async function fetchProfile() {
     error.value = ''
     try {
         const response = await axios.get('http://localhost:3000/api/users/profile', {
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
+            headers: { Authorization: `Bearer ${token}` }
         })
         firstname.value = response.data.firstname
         lastname.value = response.data.lastname
         email.value = response.data.email
+
+        if (response.data.billingAddress) {
+            Object.assign(billingAddress, response.data.billingAddress)
+        }
     } catch (err: any) {
         error.value = err.response?.data?.message || 'Erreur lors du chargement du profil'
     }
@@ -65,14 +98,13 @@ async function updateProfile() {
     error.value = ''
     success.value = ''
     try {
-        const response = await axios.put('http://localhost:3000/api/users/profile', {
+        await axios.put('http://localhost:3000/api/users/profile', {
             firstname: firstname.value,
             lastname: lastname.value,
             email: email.value,
+            billingAddress: { ...billingAddress }
         }, {
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
+            headers: { Authorization: `Bearer ${token}` }
         })
         success.value = 'Profil mis à jour avec succès !'
     } catch (err: any) {
@@ -81,11 +113,12 @@ async function updateProfile() {
 }
 
 function handleLogout() {
-  auth.logout()
-  router.push('/users')
+    auth.logout()
+    router.push('/users')
 }
 
 onMounted(() => {
     fetchProfile()
 })
+
 </script>

@@ -14,7 +14,8 @@
           <div>
             <p><strong>Commande n°:</strong> {{ order._id }}</p>
             <p><strong>Date:</strong> {{ new Date(order.createdAt).toLocaleString() }}</p>
-            <p><strong>Client :</strong> {{ order.user.firstname }} {{ order.user.lastname }}</p>
+            <p><strong>Client :</strong> {{ order.user?.firstname || 'Utilisateur inconnu' }} {{ order.user?.lastname ||
+              '' }}</p>
           </div>
           <div>
             <span :class="{
