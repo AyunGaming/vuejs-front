@@ -14,12 +14,13 @@
           <div>
             <p><strong>Commande n°:</strong> {{ order._id }}</p>
             <p><strong>Date:</strong> {{ new Date(order.createdAt).toLocaleString() }}</p>
+            <p><strong>Client :</strong> {{ order.user.firstname }} {{ order.user.lastname }}</p>
           </div>
           <div>
             <span :class="{
-              'text-green-600': order.status === 'paid',
-              'text-yellow-600': order.status === 'pending',
-              'text-red-600': order.status === 'cancelled',
+              'text-green-600': order.status === 'Payée',
+              'text-yellow-600': order.status === 'En attente',
+              'text-red-600': order.status === 'Annulée',
             }" class="font-semibold">
               {{ order.status }}
             </span>
@@ -49,6 +50,11 @@ import { ref, onMounted } from 'vue'
 import axios from 'axios'
 import { useAuthStore } from '@/store/auth'
 
+interface UserInfo {
+  firstname: string
+  lastname: string
+}
+
 interface OrderItem {
   id: string
   name: string
@@ -62,6 +68,8 @@ interface Order {
   total: number
   status: string
   createdAt: string
+  user: UserInfo
+
 }
 
 const authStore = useAuthStore()
