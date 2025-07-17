@@ -18,9 +18,11 @@
           </div>
           <div>
             <span :class="{
-              'text-green-600': order.status === 'Payée',
               'text-yellow-600': order.status === 'En attente',
+              'text-green-600': order.status === 'Payée',
               'text-red-600': order.status === 'Annulée',
+              'text-blue-600': order.status === 'Livrée',
+              'text-purple-600': order.status === 'En cours',
             }" class="font-semibold">
               {{ order.status }}
             </span>
@@ -39,8 +41,35 @@
             Total : {{ order.total.toFixed(2) }} €
           </div>
         </div>
+
+        <div v-if="authStore.isAdmin" class="mt-3 text-right">
+          <button @click="openStatusModal(order)"
+            class="px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700">
+            Modifier le statut
+          </button>
+        </div>
       </div>
     </div>
+  </div>
+
+  <div v-if="showStatusModal" class="fixed inset-0 flex items-center justify-center z-50"
+    style="background-color: rgba(0, 0, 0, 0.5);">
+    <form @submit.prevent="updateStatus" class="bg-white rounded p-6 w-96">
+      <h3 class="text-xl font-semibold mb-4">Modifier le statut de la commande</h3>
+
+      <select v-model="newStatus" class="w-full p-2 border rounded mb-4" required>
+        <option value="En attente">En attente</option>
+        <option value="Payée">Payée</option>
+        <option value="Annulée">Annulée</option>
+        <option value="Livrée">Livrée</option>
+        <option value="En cours">En cours</option>
+      </select>
+
+      <div class="flex justify-end space-x-4">
+        <button type="button" @click="showStatusModal = false" class="px-4 py-2 border rounded">Annuler</button>
+        <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">Valider</button>
+      </div>
+    </form>
   </div>
 </template>
 
@@ -76,6 +105,9 @@ const authStore = useAuthStore()
 const orders = ref<Order[]>([])
 const error = ref('')
 const isLoading = ref(true)
+const showStatusModal = ref(false)
+const selectedOrder = ref<Order | null>(null)
+const newStatus = ref('')
 
 async function fetchOrders() {
   if (!authStore.token) {
@@ -96,6 +128,36 @@ async function fetchOrders() {
     console.error(e)
   } finally {
     isLoading.value = false
+  }
+}
+
+function openStatusModal(order: Order) {
+  selectedOrder.value = order
+  newStatus.value = order.status
+  showStatusModal.value = true
+}
+
+async function updateStatus() {
+  if (!selectedOrder.value) return
+
+  try {
+    const res = await axios.patch(
+      `http://localhost:3000/api/orders/${selectedOrder.value._id}/status`,
+      { status: newStatus.value },
+      {
+        headers: { Authorization: `Bearer ${authStore.token}` }
+      }
+    )
+
+    const idx = orders.value.findIndex(o => o._id === selectedOrder.value?._id)
+    if (idx !== -1) {
+      orders.value[idx] = res.data.order
+    }
+
+    showStatusModal.value = false
+  } catch (err) {
+    alert('Erreur lors de la mise à jour du statut')
+    console.error(err)
   }
 }
 
