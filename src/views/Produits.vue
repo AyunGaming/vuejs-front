@@ -25,8 +25,8 @@
       <div v-for="(group, category) in productsByCategory" :key="category" class="mb-8">
         <h2 class="text-2xl font-semibold mb-4">{{ category }}</h2>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <CardProduct v-for="product in group" :key="product._id" :name="product.name" :productRef="product.ref"
-            :unitPrice="product.unitPrice" :currency="product.currency" />
+          <CardProduct v-for="product in group" :id="product._id" :productName="product.name" :productRef="product.ref"
+            :unitPrice="product.unitPrice" :currency="product.currency" :unit="Number(product.unit)" />
         </div>
       </div>
     </div>
@@ -53,6 +53,7 @@ interface Product {
   category: string
   unitPrice: number
   currency: string
+  unit: number
 }
 
 const showAddForm = ref(false)
