@@ -3,7 +3,7 @@
     <h1 class="text-3xl font-bold mb-12">{{ welcomeMessage }}</h1>
 
     <section class="mb-12">
-      <h2 class="text-xl font-semibold mb-4">Produits</h2>
+      <h2 class="text-xl font-semibold mb-4">Produits récents</h2>
       <div v-if="isLoadingProducts" class="text-center">Chargement des produits...</div>
       <div v-else-if="errorProducts" class="text-red-600">{{ errorProducts }}</div>
       <div v-else class="grid grid-cols-1 sm:grid-cols-3 gap-6">
@@ -20,7 +20,7 @@
     </section>
 
     <section>
-      <h2 class="text-xl font-semibold mb-4">Historique des commandes</h2>
+      <h2 class="text-xl font-semibold mb-4">Historique des commandes récentes</h2>
 
       <div v-if="!authStore.token" class="text-gray-600 italic">
         Vous devez être connecté pour avoir accès à l’historique de vos commandes.
