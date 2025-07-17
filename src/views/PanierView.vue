@@ -20,9 +20,8 @@
                     </div>
                     <div class="text-right">
                         <p>{{ (item.price * item.quantity).toFixed(2) }} €</p>
-                        <button @click="remove(item.id)" class="text-red-600 text-sm mt-1 hover:underline">
-                            Supprimer
-                        </button>
+                        <button @click="remove(item.id)"
+                            class="text-red-600 text-sm mt-1 hover:underline">Supprimer</button>
                     </div>
                 </div>
 
@@ -30,29 +29,21 @@
 
                 <!-- Adresse Livraison -->
                 <div class="mt-6">
-                    <label for="shippingAddress" class="block font-medium mb-1">
-                        Adresse de livraison :
-                    </label>
-
+                    <label for="shippingAddress" class="block font-medium mb-1">Adresse de livraison :</label>
                     <select id="shippingAddress" v-model="selectedShippingKey" class="border p-2 rounded w-full mb-4"
                         required>
                         <option disabled value="">-- Choisissez une adresse --</option>
                         <option v-for="(address, key) in shippingAddresses" :key="key" :value="key">
-                            {{ key === 'facturation' ? formatAddress(address) :
-                            formatAddress(address) }}
+                            {{ formatAddress(address) }}
                         </option>
                         <option value="new">Ajouter une nouvelle adresse</option>
                     </select>
 
                     <div v-if="selectedShippingKey === 'new'" class="space-y-2 mb-4">
-                        <input v-model="newShippingAddress.street" type="text" placeholder="Rue"
-                            class="border p-2 rounded w-full" required />
-                        <input v-model="newShippingAddress.city" type="text" placeholder="Ville"
-                            class="border p-2 rounded w-full" required />
-                        <input v-model="newShippingAddress.postalCode" type="text" placeholder="Code postal"
-                            class="border p-2 rounded w-full" required />
-                        <input v-model="newShippingAddress.country" type="text" placeholder="Pays"
-                            class="border p-2 rounded w-full" required />
+                        <template v-for="field in fields" :key="field">
+                            <input v-model="newShippingAddress[field]" :placeholder="getPlaceholder(field)"
+                                class="border p-2 rounded w-full" />
+                        </template>
                     </div>
                 </div>
 
@@ -64,10 +55,7 @@
                     </label>
 
                     <div v-if="!billingSameAsShipping">
-                        <label for="billingAddress" class="block font-medium mb-1">
-                            Adresse de facturation :
-                        </label>
-
+                        <label for="billingAddress" class="block font-medium mb-1">Adresse de facturation :</label>
                         <select id="billingAddress" v-model="selectedBillingKey" class="border p-2 rounded w-full mb-4"
                             required>
                             <option disabled value="">-- Choisissez une adresse --</option>
@@ -78,14 +66,10 @@
                         </select>
 
                         <div v-if="selectedBillingKey === 'new'" class="space-y-2 mb-4">
-                            <input v-model="newBillingAddress.street" type="text" placeholder="Rue"
-                                class="border p-2 rounded w-full" required />
-                            <input v-model="newBillingAddress.city" type="text" placeholder="Ville"
-                                class="border p-2 rounded w-full" required />
-                            <input v-model="newBillingAddress.postalCode" type="text" placeholder="Code postal"
-                                class="border p-2 rounded w-full" required />
-                            <input v-model="newBillingAddress.country" type="text" placeholder="Pays"
-                                class="border p-2 rounded w-full" required />
+                            <template v-for="field in fields" :key="field">
+                                <input v-model="newBillingAddress[field]" :placeholder="getPlaceholder(field)"
+                                    class="border p-2 rounded w-full" />
+                            </template>
                         </div>
                     </div>
                 </div>
@@ -116,6 +100,17 @@ interface Address {
     country: string
 }
 
+const fields: (keyof Address)[] = ["street", "city", "postalCode", "country"]
+const placeholders: Record<keyof Address, string> = {
+    street: "Rue",
+    city: "Ville",
+    postalCode: "Code postal",
+    country: "Pays",
+}
+function getPlaceholder(field: keyof Address): string {
+    return placeholders[field]
+}
+
 const cartStore = useCartStore()
 const authStore = useAuthStore()
 
@@ -125,87 +120,52 @@ const selectedShippingKey = ref("")
 const selectedBillingKey = ref("")
 const billingSameAsShipping = ref(true)
 
-const newShippingAddress = ref<Address>({
-    street: "",
-    city: "",
-    postalCode: "",
-    country: "",
-})
-
-const newBillingAddress = ref<Address>({
-    street: "",
-    city: "",
-    postalCode: "",
-    country: "",
-})
+const newShippingAddress = ref<Address>({ street: "", city: "", postalCode: "", country: "" })
+const newBillingAddress = ref<Address>({ street: "", city: "", postalCode: "", country: "" })
 
 const successMessage = ref("")
 const errorMessage = ref("")
 
 const totalPrice = computed(() => cartStore.totalPrice)
 
-// Validation simple des adresses
 function isAddressComplete(addr: Address) {
-    return (
-        addr.street.trim() !== "" &&
-        addr.city.trim() !== "" &&
-        addr.postalCode.trim() !== "" &&
-        addr.country.trim() !== ""
-    )
+    return fields.every(field => addr[field].trim() !== "")
+}
+
+function getSelectedAddress(
+    selectedKey: string,
+    newAddr: Address,
+    saved: Record<string, Address>
+): Address | undefined {
+    if (selectedKey === "new") {
+        return isAddressComplete(newAddr) ? { ...newAddr } : undefined
+    } else {
+        return saved[selectedKey]
+    }
 }
 
 const isFormValid = computed(() => {
-    // Livraison
-    let shippingValid = false
-    if (selectedShippingKey.value === "new") {
-        shippingValid = isAddressComplete(newShippingAddress.value)
-    } else {
-        shippingValid = selectedShippingKey.value !== ""
-    }
+    const shippingValid =
+        selectedShippingKey.value === "new"
+            ? isAddressComplete(newShippingAddress.value)
+            : selectedShippingKey.value !== ""
 
-    // Facturation
-    let billingValid = false
-    if (billingSameAsShipping.value) {
-        billingValid = shippingValid
-    } else {
-        if (selectedBillingKey.value === "new") {
-            billingValid = isAddressComplete(newBillingAddress.value)
-        } else {
-            billingValid = selectedBillingKey.value !== ""
-        }
-    }
+    const billingValid = billingSameAsShipping.value
+        ? shippingValid
+        : selectedBillingKey.value === "new"
+            ? isAddressComplete(newBillingAddress.value)
+            : selectedBillingKey.value !== ""
 
     return shippingValid && billingValid
 })
 
-onMounted(async () => {
-    if (!authStore.token) return
-
-    try {
-        const res = await axios.get("http://localhost:3000/api/users/profile", {
-            headers: { Authorization: `Bearer ${authStore.token}` },
-        })
-
-        const userAddress = res.data.address || res.data.shippingAddress
-
-        if (userAddress) {
-            shippingAddresses.value = { default: userAddress }
-
-            selectedShippingKey.value = "default"
-        }
-
-        if (res.data.billingAddress) {
-            billingAddresses.value = { default: res.data.billingAddress }
-            shippingAddresses.value['facturation'] = res.data.billingAddress
-            selectedBillingKey.value = "default"
-        } else {
-            billingSameAsShipping.value = true
-        }
-    } catch (e) {
-        console.error("Erreur récupération profil", e)
-    }
-})
-
+function resetForm() {
+    selectedShippingKey.value = ""
+    selectedBillingKey.value = ""
+    billingSameAsShipping.value = true
+    newShippingAddress.value = { street: "", city: "", postalCode: "", country: "" }
+    newBillingAddress.value = { street: "", city: "", postalCode: "", country: "" }
+}
 
 function formatAddress(addr: Address) {
     return `${addr.street}, ${addr.postalCode} ${addr.city}, ${addr.country}`
@@ -215,47 +175,52 @@ function remove(id: string) {
     cartStore.removeFromCart(id)
 }
 
+onMounted(async () => {
+    if (!authStore.token) return
+    try {
+        const res = await axios.get("http://localhost:3000/api/users/profile", {
+            headers: { Authorization: `Bearer ${authStore.token}` },
+        })
+
+        const userAddress = res.data.address || res.data.shippingAddress
+        if (userAddress) {
+            shippingAddresses.value.default = userAddress
+            selectedShippingKey.value = "default"
+        }
+
+        if (res.data.billingAddress) {
+            billingAddresses.value.default = res.data.billingAddress
+            shippingAddresses.value.facturation = res.data.billingAddress
+            selectedBillingKey.value = "default"
+        }
+    } catch (e) {
+        console.error("Erreur récupération profil", e)
+    }
+})
+
 async function passerCommande() {
     if (!authStore.token) {
         alert("Vous devez être connecté pour passer commande.")
         return
     }
 
-    // Prépare adresse livraison
-    let shippingAddressToSend: Address | undefined = undefined
-    if (selectedShippingKey.value === "new") {
-        if (!isAddressComplete(newShippingAddress.value)) {
-            alert("Merci de remplir tous les champs de la nouvelle adresse de livraison.")
-            return
-        }
-        shippingAddressToSend = { ...newShippingAddress.value }
-    } else {
-        shippingAddressToSend = shippingAddresses.value[selectedShippingKey.value]
-    }
+    const shippingAddressToSend = getSelectedAddress(
+        selectedShippingKey.value,
+        newShippingAddress.value,
+        shippingAddresses.value
+    )
 
     if (!shippingAddressToSend) {
-        alert("Veuillez sélectionner une adresse de livraison.")
+        alert("Veuillez sélectionner une adresse de livraison complète.")
         return
     }
 
-    // Prépare adresse facturation
-    let billingAddressToSend: Address | undefined = undefined
-    if (billingSameAsShipping.value) {
-        billingAddressToSend = shippingAddressToSend
-    } else {
-        if (selectedBillingKey.value === "new") {
-            if (!isAddressComplete(newBillingAddress.value)) {
-                alert("Merci de remplir tous les champs de la nouvelle adresse de facturation.")
-                return
-            }
-            billingAddressToSend = { ...newBillingAddress.value }
-        } else {
-            billingAddressToSend = billingAddresses.value[selectedBillingKey.value]
-        }
-    }
+    const billingAddressToSend = billingSameAsShipping.value
+        ? shippingAddressToSend
+        : getSelectedAddress(selectedBillingKey.value, newBillingAddress.value, billingAddresses.value)
 
     if (!billingAddressToSend) {
-        alert("Veuillez sélectionner une adresse de facturation.")
+        alert("Veuillez sélectionner une adresse de facturation complète.")
         return
     }
 
@@ -276,21 +241,7 @@ async function passerCommande() {
         )
         successMessage.value = "Commande passée avec succès !"
         cartStore.clearCart()
-        selectedShippingKey.value = ""
-        selectedBillingKey.value = ""
-        billingSameAsShipping.value = true
-        newShippingAddress.value = {
-            street: "",
-            city: "",
-            postalCode: "",
-            country: "",
-        }
-        newBillingAddress.value = {
-            street: "",
-            city: "",
-            postalCode: "",
-            country: "",
-        }
+        resetForm()
         setTimeout(() => {
             successMessage.value = ""
         }, 3000)
