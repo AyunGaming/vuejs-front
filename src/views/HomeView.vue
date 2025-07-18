@@ -32,19 +32,23 @@
         <div v-else>
           <div v-if="orders.length === 0" class="text-gray-500">Aucune commande trouvée.</div>
           <ul>
-            <li v-for="order in orders" :key="order._id" class="flex justify-between border-b py-2">
-              <span>Commande n° {{ order._id }}</span>
+            <li v-for="order in orders" :key="order._id"
+              class="grid grid-cols-3 gap-4 items-center border-b py-2 text-sm md:text-base">
+              <span class="truncate font-mono">Commande n° {{ order._id }}</span>
               <span :class="{
-                'text-green-600': order.status === 'paid',
-                'text-yellow-600': order.status === 'pending',
-                'text-red-600': order.status === 'cancelled'
-              }">
+                'text-yellow-600': order.status === 'En attente',
+                'text-green-600': order.status === 'Payée',
+                'text-red-600': order.status === 'Annulée',
+                'text-blue-600': order.status === 'Livrée',
+                'text-purple-600': order.status === 'En cours',
+              }" class="font-semibold text-center">
                 {{ statusLabel(order.status) }}
               </span>
-              <span class="font-bold">
+              <span class="text-right font-bold">
                 {{ order.total != null ? order.total.toFixed(2) : 'N/A' }} €
               </span>
             </li>
+
           </ul>
         </div>
       </div>
