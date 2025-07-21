@@ -23,9 +23,13 @@
             Commandes
           </router-link>
         </li>
-
+        <li v-if="auth.isAdmin">
+          <router-link to="/users" class="hover:text-indigo-300 transition" active-class="underline">
+            Utilisateurs
+          </router-link>
+        </li>
         <li>
-          <router-link v-if="!auth.isLoggedIn" to="/users" class="hover:text-indigo-300 transition"
+          <router-link v-if="!auth.isLoggedIn" to="/connexion" class="hover:text-indigo-300 transition"
             active-class="underline">
             Connexion
           </router-link>
