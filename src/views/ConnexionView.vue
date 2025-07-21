@@ -1,6 +1,10 @@
 <template>
   <div class="max-w-md mx-auto p-4 border rounded shadow mt-10">
-    <component :is="showLogin ? LoginForm : RegisterForm" @switch="toggleForm" />
+    <component 
+      :is="showLogin ? LoginForm : RegisterForm" 
+      @switch="toggleForm" 
+      @registered="showLogin = true" 
+    />
   </div>
 </template>
 
