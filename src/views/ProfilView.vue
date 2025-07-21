@@ -114,7 +114,7 @@ async function updateProfile() {
 
 function handleLogout() {
     auth.logout()
-    router.push('/users')
+    router.push('/connexion')
 }
 
 onMounted(() => {

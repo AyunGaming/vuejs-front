@@ -15,20 +15,17 @@
     </div>
     <div>
       <label for="password" class="block mb-1 font-medium">Mot de passe</label>
-      <input id="password" v-model="password" type="password" required minlength="6" class="border p-2 w-full rounded" />
+      <input id="password" v-model="password" type="password" required minlength="6"
+        class="border p-2 w-full rounded" />
     </div>
 
     <!-- Nouveau bloc adresse de facturation -->
     <fieldset class="border p-4 rounded space-y-3">
       <legend class="font-semibold mb-2">Adresse de facturation</legend>
-
-      <div>
-        <label for="billingFullname" class="block mb-1">Nom complet</label>
-        <input id="billingFullname" v-model="billingAddress.fullname" type="text" required class="border p-2 w-full rounded" />
-      </div>
       <div>
         <label for="billingStreet" class="block mb-1">Rue</label>
-        <input id="billingStreet" v-model="billingAddress.street" type="text" required class="border p-2 w-full rounded" />
+        <input id="billingStreet" v-model="billingAddress.street" type="text" required
+          class="border p-2 w-full rounded" />
       </div>
       <div>
         <label for="billingCity" class="block mb-1">Ville</label>
@@ -36,11 +33,13 @@
       </div>
       <div>
         <label for="billingPostalCode" class="block mb-1">Code postal</label>
-        <input id="billingPostalCode" v-model="billingAddress.postalCode" type="text" required class="border p-2 w-full rounded" />
+        <input id="billingPostalCode" v-model="billingAddress.postalCode" type="text" required
+          class="border p-2 w-full rounded" />
       </div>
       <div>
         <label for="billingCountry" class="block mb-1">Pays</label>
-        <input id="billingCountry" v-model="billingAddress.country" type="text" required class="border p-2 w-full rounded" />
+        <input id="billingCountry" v-model="billingAddress.country" type="text" required
+          class="border p-2 w-full rounded" />
       </div>
     </fieldset>
 
@@ -67,8 +66,12 @@ const email = ref('')
 const password = ref('')
 const error = ref('')
 
+const emit = defineEmits<{
+  (e: 'switch'): void
+  (e: 'registered'): void  
+}>()
+
 const billingAddress = reactive({
-  fullname: '',
   street: '',
   city: '',
   postalCode: '',
@@ -86,7 +89,8 @@ async function handleRegister() {
       billingAddress: { ...billingAddress },
     })
     alert("Inscription réussie, vous pouvez maintenant vous connecter !")
-    router.push('/users')  
+    emit('registered')
+    router.push('/connexion')
   } catch (err: any) {
     error.value = err.response?.data?.message || "Erreur lors de l'inscription"
   }
