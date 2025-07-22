@@ -3,6 +3,12 @@
     <h1 class="text-3xl font-bold mb-12">{{ welcomeMessage }}</h1>
 
     <section class="mb-12">
+      <h2 class="text-xl font-semibold mb-4">
+        Chiffre d'affaires de l'entreprise : {{ totalChiffreAffaires.toFixed(2) }} €
+      </h2>
+    </section>
+
+    <section class="mb-12">
       <h2 class="text-xl font-semibold mb-4">Produits récents</h2>
       <div v-if="isLoadingProducts" class="text-center">Chargement des produits...</div>
       <div v-else-if="errorProducts" class="text-red-600">{{ errorProducts }}</div>
@@ -20,7 +26,9 @@
     </section>
 
     <section>
-      <h2 class="text-xl font-semibold mb-4">Historique des commandes récentes</h2>
+      <h2 class="text-xl font-semibold mb-4">
+        Historique des commandes récentes <span class="text-gray-600">(Total de commande : {{ orders.length }})</span>
+      </h2>
 
       <div v-if="!authStore.token" class="text-gray-600 italic">
         Vous devez être connecté pour avoir accès à l’historique de vos commandes.
@@ -31,25 +39,26 @@
         <div v-else-if="errorOrders" class="text-red-600">{{ errorOrders }}</div>
         <div v-else>
           <div v-if="orders.length === 0" class="text-gray-500">Aucune commande trouvée.</div>
-          <ul>
-            <li v-for="order in orders" :key="order._id"
-              class="grid grid-cols-3 gap-4 items-center border-b py-2 text-sm md:text-base">
-              <span class="truncate font-mono">Commande n° {{ order._id }}</span>
-              <span :class="{
-                'text-yellow-600': order.status === 'En attente',
-                'text-green-600': order.status === 'Payée',
-                'text-red-600': order.status === 'Annulée',
-                'text-blue-600': order.status === 'Livrée',
-                'text-purple-600': order.status === 'En cours',
-              }" class="font-semibold text-center">
-                {{ statusLabel(order.status) }}
-              </span>
-              <span class="text-right font-bold">
-                {{ order.total != null ? order.total.toFixed(2) : 'N/A' }} €
-              </span>
-            </li>
-
-          </ul>
+          <div v-else>
+            <ul>
+              <li v-for="order in recentSortedOrders" :key="order._id"
+                class="grid grid-cols-3 gap-2 items-center border-b py-2 text-sm md:text-base">
+                <span class="truncate font-mono">Commande n° {{ order._id }}</span>
+                <span :class="{
+                  'text-green-600': order.status === 'Payée',
+                  'text-blue-600': order.status === 'Livrée',
+                  'text-purple-600': order.status === 'En cours',
+                  'text-yellow-600': order.status === 'En attente',
+                  'text-red-600': order.status === 'Annulée',
+                }" class="font-semibold text-center">
+                  {{ order.status }}
+                </span>
+                <span class="text-right font-bold">
+                  {{ order.total != null ? order.total.toFixed(2) : 'N/A' }} €
+                </span>
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
     </section>
@@ -66,12 +75,14 @@ interface Product {
   ref: number
   name: string
   unitPrice: number
+  createdAt: string
 }
 
 interface OrderSummary {
   _id: string
   status: string
   total: number
+  createdAt: string
 }
 
 interface UserInfo {
@@ -90,6 +101,12 @@ const errorOrders = ref('')
 const isLoadingProducts = ref(true)
 const isLoadingOrders = ref(true)
 
+const statusOrder = ['En attente', 'En cours', 'Livrée', 'Payée', 'Annulée']
+
+const totalChiffreAffaires = computed(() => {
+  return orders.value.reduce((acc, order) => acc + (order.total ?? 0), 0)
+})
+
 async function fetchUserProfile() {
   if (!authStore.token) return
   try {
@@ -104,8 +121,10 @@ async function fetchUserProfile() {
 
 async function fetchProducts() {
   try {
-    const res = await axios.get('http://localhost:3000/api/products?limit=3')
+    const res = await axios.get('http://localhost:3000/api/products')
     products.value = res.data
+      .sort((a: Product, b: Product) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, 3)
   } catch (e) {
     errorProducts.value = 'Erreur lors du chargement des produits.'
     console.error(e)
@@ -113,6 +132,7 @@ async function fetchProducts() {
     isLoadingProducts.value = false
   }
 }
+
 
 async function fetchOrders() {
   if (!authStore.token) {
@@ -123,11 +143,11 @@ async function fetchOrders() {
     const res = await axios.get('http://localhost:3000/api/orders/my-orders', {
       headers: { Authorization: `Bearer ${authStore.token}` }
     })
-    // On ne garde que le résumé : id, status, total
     orders.value = res.data.map((o: any) => ({
       _id: o._id,
       status: o.status,
-      total: o.total
+      total: o.total,
+      createdAt: o.createdAt
     }))
   } catch (e) {
     errorOrders.value = 'Erreur lors du chargement des commandes.'
@@ -148,12 +168,18 @@ const welcomeMessage = computed(() => {
   return 'Bienvenue sur l\'application'
 })
 
-const statusLabel = (status: string) => {
-  switch (status) {
-    case 'paid': return 'Payée'
-    case 'pending': return 'En attente'
-    case 'cancelled': return 'Annulée'
-    default: return status
-  }
-}
+const recentSortedOrders = computed(() => {
+  return orders.value
+    .slice()
+    .sort((a, b) => {
+      const statusDiff = statusOrder.indexOf(a.status) - statusOrder.indexOf(b.status)
+      if (statusDiff !== 0) return statusDiff
+
+      const dateA = new Date(a.createdAt).getTime()
+      const dateB = new Date(b.createdAt).getTime()
+      return dateB - dateA
+    })
+    .slice(0, 5)
+})
+
 </script>
