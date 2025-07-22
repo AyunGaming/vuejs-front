@@ -17,7 +17,7 @@
     <div v-else>
       <div v-if="orders.length === 0" class="text-gray-500 text-center">Vous n’avez aucune commande.</div>
 
-      <div v-for="order in orders" :key="order._id" class="border rounded p-4 mb-6">
+      <div v-for="order in paginatedOrders" :key="order._id" class="border rounded p-4 mb-6">
         <div class="flex justify-between items-center mb-2">
           <div>
             <p><strong>Commande n°:</strong> {{ order._id }}</p>
@@ -60,6 +60,24 @@
             Télécharger la facture
           </button>
         </div>
+      </div>
+      <div v-if="totalPages > 1" class="flex justify-center mt-6 space-x-2">
+        <button @click="goToPage(currentPage - 1)" :disabled="currentPage === 1"
+          class="px-3 py-1 border rounded hover:bg-gray-100">
+          Précédent
+        </button>
+
+        <button v-for="page in totalPages" :key="page" @click="goToPage(page)" :class="[
+          'px-3 py-1 border rounded',
+          currentPage === page ? 'bg-indigo-600 text-white' : 'hover:bg-gray-100'
+        ]">
+          {{ page }}
+        </button>
+
+        <button @click="goToPage(currentPage + 1)" :disabled="currentPage === totalPages"
+          class="px-3 py-1 border rounded hover:bg-gray-100">
+          Suivant
+        </button>
       </div>
     </div>
 
@@ -138,7 +156,7 @@
 
         <div>
           <h3 class="font-semibold mb-2">Articles disponibles :</h3>
-          <div v-for="article in articles" :key="article._id" class="flex items-center mb-2 space-x-4">
+          <div v-for="article in paginatedArticles" :key="article._id" class="flex items-center mb-2 space-x-4">
             <div class="flex-1">
               {{ article.name }} :
               {{ article.unitPrice?.toFixed(2) }} €
@@ -146,6 +164,24 @@
             </div>
             <input type="number" min="0" :max="article.stock" :disabled="article.stock === 0"
               class="w-20 border rounded p-1" v-model.number="quantities[article._id]" />
+          </div>
+          <div v-if="totalArticlePages > 1" class="flex justify-center mt-4 space-x-2">
+            <button @click="goToArticlePage(currentArticlePage - 1)" :disabled="currentArticlePage === 1"
+              class="px-3 py-1 border rounded hover:bg-gray-100">
+              < </button>
+
+                <button v-for="page in totalArticlePages" :key="page" @click="goToArticlePage(page)" :class="[
+                  'px-3 py-1 border rounded',
+                  currentArticlePage === page ? 'bg-indigo-600 text-white' : 'hover:bg-gray-100'
+                ]">
+                  {{ page }}
+                </button>
+
+                <button @click="goToArticlePage(currentArticlePage + 1)"
+                  :disabled="currentArticlePage === totalArticlePages"
+                  class="px-3 py-1 border rounded hover:bg-gray-100">
+                  >
+                </button>
           </div>
         </div>
 
@@ -218,6 +254,44 @@ const users = ref<UserInfo[]>([])
 const articles = ref<Article[]>([])
 const selectedUserId = ref('')
 const quantities = ref<Record<string, number>>({})
+
+const currentPage = ref(1)
+const itemsPerPage = 3
+
+const paginatedOrders = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage
+  const end = start + itemsPerPage
+  return orders.value.slice(start, end)
+})
+
+const totalPages = computed(() => {
+  return Math.ceil(orders.value.length / itemsPerPage)
+})
+
+function goToPage(page: number) {
+  if (page >= 1 && page <= totalPages.value) {
+    currentPage.value = page
+  }
+}
+
+const currentArticlePage = ref(1)
+const articlesPerPage = 4
+
+const paginatedArticles = computed(() => {
+  const start = (currentArticlePage.value - 1) * articlesPerPage
+  const end = start + articlesPerPage
+  return articles.value.slice(start, end)
+})
+
+const totalArticlePages = computed(() => {
+  return Math.ceil(articles.value.length / articlesPerPage)
+})
+
+function goToArticlePage(page: number) {
+  if (page >= 1 && page <= totalArticlePages.value) {
+    currentArticlePage.value = page
+  }
+}
 
 const useExistingBilling = ref(true)
 const billingAddress = ref({
