@@ -105,94 +105,7 @@
     <!-- Modal création commande -->
     <div v-if="showCreateOrderModal" class="fixed inset-0 flex items-center justify-center z-50"
       style="background-color: rgba(0, 0, 0, 0.5);">
-      <div class="bg-white rounded-lg p-6 max-w-lg w-full overflow-auto max-h-[80vh]">
-        <h2 class="text-xl font-bold mb-4">Créer une nouvelle commande</h2>
-
-        <div class="mb-4">
-          <label class="block font-medium mb-1">Sélectionner un utilisateur</label>
-          <select v-model="selectedUserId" class="w-full border rounded p-2 mb-4" required>
-            <option value="" disabled>Choisir un utilisateur</option>
-            <option v-for="user in users" :key="user._id" :value="user._id">
-              {{ user.firstname }} {{ user.lastname }}
-            </option>
-          </select>
-          <!-- Choix de l’adresse de facturation -->
-          <div class="mb-4">
-            <label class="block font-medium mb-1">Adresse de facturation</label>
-            <select v-model="useExistingBilling" class="w-full border rounded p-2 mb-2">
-              <option :value="true">Utiliser l’adresse de l’utilisateur</option>
-              <option :value="false">Saisir une nouvelle adresse</option>
-            </select>
-          </div>
-
-          <!-- Si nouvelle adresse -->
-          <div v-if="!useExistingBilling" class="mb-4">
-            <p>Veuillez saisir votre nouvelle adresse : </p>
-            <input v-model="billingAddress.street" placeholder="N° + Rue" class="w-full border rounded p-2 mb-2" />
-            <input v-model="billingAddress.city" placeholder="Ville" class="w-full border rounded p-2 mb-2" />
-            <input v-model="billingAddress.postalCode" placeholder="Code postal"
-              class="w-full border rounded p-2 mb-2" />
-            <input v-model="billingAddress.country" placeholder="Pays" class="w-full border rounded p-2" />
-          </div>
-        </div>
-
-        <!-- Adresse de livraison -->
-        <div class="mb-4">
-          <label class="inline-flex items-center space-x-2 mb-2">
-            <input type="checkbox" v-model="sameAsBilling" class="accent-indigo-600" />
-            <span class="font-medium text-sm">Adresse de livraison identique à la facturation</span>
-          </label>
-        </div>
-
-        <div v-if="!sameAsBilling" class="mb-4">
-          <p class="mb-2 text-sm font-medium text-gray-700">Veuillez saisir votre adresse de livraison :</p>
-          <input v-model="shippingAddress.street" placeholder="N° + Rue" class="w-full border rounded p-2 mb-2" />
-          <input v-model="shippingAddress.city" placeholder="Ville" class="w-full border rounded p-2 mb-2" />
-          <input v-model="shippingAddress.postalCode" placeholder="Code postal"
-            class="w-full border rounded p-2 mb-2" />
-          <input v-model="shippingAddress.country" placeholder="Pays" class="w-full border rounded p-2" />
-        </div>
-
-
-        <div>
-          <h3 class="font-semibold mb-2">Articles disponibles :</h3>
-          <div v-for="article in paginatedArticles" :key="article._id" class="flex items-center mb-2 space-x-4">
-            <div class="flex-1">
-              {{ article.name }} :
-              {{ article.unitPrice?.toFixed(2) }} €
-              (Stock : {{ article.stock }} {{ article.unit }})
-            </div>
-            <input type="number" min="0" :max="article.stock" :disabled="article.stock === 0"
-              class="w-20 border rounded p-1" v-model.number="quantities[article._id]" />
-          </div>
-          <div v-if="totalArticlePages > 1" class="flex justify-center mt-4 space-x-2">
-            <button @click="goToArticlePage(currentArticlePage - 1)" :disabled="currentArticlePage === 1"
-              class="px-3 py-1 border rounded hover:bg-gray-100">
-              < </button>
-
-                <button v-for="page in totalArticlePages" :key="page" @click="goToArticlePage(page)" :class="[
-                  'px-3 py-1 border rounded',
-                  currentArticlePage === page ? 'bg-indigo-600 text-white' : 'hover:bg-gray-100'
-                ]">
-                  {{ page }}
-                </button>
-
-                <button @click="goToArticlePage(currentArticlePage + 1)"
-                  :disabled="currentArticlePage === totalArticlePages"
-                  class="px-3 py-1 border rounded hover:bg-gray-100">
-                  >
-                </button>
-          </div>
-        </div>
-
-        <div class="mt-6 flex justify-end space-x-4">
-          <button @click="showCreateOrderModal = false" type="button"
-            class="px-4 py-2 border rounded hover:bg-gray-100">Annuler</button>
-          <button @click="createOrder" type="button"
-            class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">Valider</button>
-        </div>
-
-      </div>
+      <PasserCommande :users="users" @close="showCreateOrderModal = false"></PasserCommande>
     </div>
   </div>
 </template>
@@ -201,6 +114,7 @@
 import { ref, onMounted, watch, computed } from 'vue'
 import axios from 'axios'
 import { useAuthStore } from '@/store/auth'
+import PasserCommande from '@/components/PasserCommande.vue'
 
 interface UserInfo {
   _id: string
@@ -240,7 +154,6 @@ interface Order {
 
 const authStore = useAuthStore()
 
-// Données commandes existantes
 const orders = ref<Order[]>([])
 const error = ref('')
 const isLoading = ref(true)
@@ -248,11 +161,9 @@ const showStatusModal = ref(false)
 const selectedOrder = ref<Order | null>(null)
 const newStatus = ref('')
 
-// Données modal création commande
 const showCreateOrderModal = ref(false)
 const users = ref<UserInfo[]>([])
 const articles = ref<Article[]>([])
-const selectedUserId = ref('')
 const quantities = ref<Record<string, number>>({})
 
 const currentPage = ref(1)
@@ -274,46 +185,7 @@ function goToPage(page: number) {
   }
 }
 
-const currentArticlePage = ref(1)
-const articlesPerPage = 4
 
-const paginatedArticles = computed(() => {
-  const start = (currentArticlePage.value - 1) * articlesPerPage
-  const end = start + articlesPerPage
-  return articles.value.slice(start, end)
-})
-
-const totalArticlePages = computed(() => {
-  return Math.ceil(articles.value.length / articlesPerPage)
-})
-
-function goToArticlePage(page: number) {
-  if (page >= 1 && page <= totalArticlePages.value) {
-    currentArticlePage.value = page
-  }
-}
-
-const useExistingBilling = ref(true)
-const billingAddress = ref({
-  street: '',
-  city: '',
-  postalCode: '',
-  country: ''
-})
-const sameAsBilling = ref(true)
-
-const shippingAddress = ref({
-  street: '',
-  city: '',
-  postalCode: '',
-  country: ''
-})
-
-const selectedUser = computed(() => {
-  return users.value.find(u => u._id === selectedUserId.value)
-})
-
-// Fetch commandes existantes
 async function fetchOrders() {
   if (!authStore.token) {
     error.value = 'Veuillez vous connecter pour accéder à l’historique de vos commandes.'
@@ -415,59 +287,6 @@ async function downloadInvoice(orderId: string) {
     alert('Erreur lors du téléchargement de la facture.')
   }
 }
-
-async function createOrder() {
-  if (!selectedUserId.value) {
-    alert('Veuillez sélectionner un utilisateur.')
-    return
-  }
-
-  const items = Object.entries(quantities.value)
-    .filter(([_, qty]) => qty > 0)
-    .map(([productId, qty]) => ({
-      productId,
-      stock: qty,
-    }))
-
-  if (items.length === 0) {
-    alert('Veuillez sélectionner au moins un article avec une quantité supérieure à zéro.')
-    return
-  }
-
-  // Récupérer l'utilisateur complet (id + billingAddress) - suppose que tu as la liste utilisateurs en cache ou via API
-  const selectedUser = users.value.find(u => u._id === selectedUserId.value)
-  if (!selectedUser) {
-    alert("Utilisateur introuvable.")
-    return
-  }
-
-  // Adresse de facturation
-  const billing = useExistingBilling.value
-    ? selectedUser.billingAddress
-    : billingAddress.value
-
-  // Adresse de livraison (checkbox sameAsBilling à gérer dans ton composant)
-  const shipping = sameAsBilling.value ? billing : shippingAddress.value
-
-  try {
-    await axios.post('http://localhost:3000/api/orders/', {
-      userId: selectedUserId.value,
-      items,
-      billingAddress: billing,
-      shippingAddress: shipping,
-    }, {
-      headers: { Authorization: `Bearer ${authStore.token}` }
-    })
-
-    alert('Commande créée avec succès !')
-    showCreateOrderModal.value = false
-    fetchOrders()
-  } catch (e) {
-    console.error('Erreur lors de la création de la commande', e)
-    alert('Erreur lors de la création de la commande.')
-  }
-}
-
 
 onMounted(() => {
   fetchOrders()
