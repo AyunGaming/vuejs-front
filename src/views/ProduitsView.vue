@@ -28,9 +28,7 @@
         <h2 class="text-2xl font-semibold mb-4">{{ category }}</h2>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div v-for="product in group" :key="product._id">
-            <CardProduct :id="product._id" :productName="product.name" :productRef="product.ref"
-              :unitPrice="product.unitPrice" :currency="product.currency" :unit="Number(product.unit)"
-              @open-info="openProductInfo" />
+            <CardProduct :product="product" @open-info="openProductInfo" />
           </div>
         </div>
       </div>
@@ -64,7 +62,8 @@ interface Product {
   category: string
   unitPrice: number
   currency: string
-  unit: number
+  unit: string
+  stock: number
 }
 
 function openForm() {
