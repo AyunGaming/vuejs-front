@@ -73,6 +73,26 @@
                             <option value="admin">Admin</option>
                         </select>
                     </div>
+                    <div class="mb-3">
+                        <label class="block text-sm font-medium">Rue</label>
+                        <input v-model="editUser!.billingAddress.street" placeholder="Rue"
+                            class="w-full border rounded p-2 mb-2" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="block text-sm font-medium">Ville</label>
+                        <input v-model="editUser!.billingAddress.city" placeholder="Ville"
+                            class="w-full border rounded p-2 mb-2" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="block text-sm font-medium">Code postal</label>
+                        <input v-model="editUser!.billingAddress.postalCode" placeholder="Code postal"
+                            class="w-full border rounded p-2 mb-2" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="block text-sm font-medium">Pays</label>
+                        <input v-model="editUser!.billingAddress.country" placeholder="Pays"
+                            class="w-full border rounded p-2" />
+                    </div>
 
                     <div class="flex justify-end space-x-2">
                         <button type="button" @click="closeModal" class="border px-4 py-2 rounded">
@@ -113,12 +133,20 @@ import axios from 'axios'
 import { useAuthStore } from '@/store/auth'
 import UserCreateForm from '@/components/AjoutUser.vue'
 
+interface Address {
+    street: string
+    city: string
+    postalCode: string
+    country: string
+}
+
 interface User {
     _id: string
     firstname: string
     lastname: string
     email: string
     role: string
+    billingAddress : Address
 }
 
 const users = ref<User[]>([])
@@ -151,9 +179,17 @@ async function fetchUsers() {
 }
 
 function openEditModal(user: User) {
-    editUser.value = { ...user }
+    editUser.value = {
+        ...user, billingAddress: user.billingAddress || {
+            street: '',
+            city: '',
+            postalCode: '',
+            country: '',
+        }
+    }
     showModal.value = true
 }
+
 
 function closeModal() {
     showModal.value = false
