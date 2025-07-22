@@ -1,6 +1,24 @@
 <template>
     <div class="max-w-5xl mx-auto mt-10 px-4">
         <h1 class="text-3xl font-bold mb-6 text-center">Gestion des utilisateurs</h1>
+        <div class="flex justify-end mb-4">
+            <button v-if="authStore.user?.role === 'admin'" @click="openCreateModal"
+                class="bg-indigo-700 text-white px-4 py-2 rounded hover:bg-indigo-800">
+                Ajouter un utilisateur
+            </button>
+        </div>
+
+        <div v-if="showCreateModal" class="fixed inset-0 flex items-center justify-center z-50"
+            style="background-color: rgba(0, 0, 0, 0.5);">
+            <div class="bg-white rounded-lg p-6 w-full max-w-md relative">
+                <button @click.stop="showCreateModal = false"
+                    class="absolute top-2 right-2 text-gray-600 hover:text-gray-900">
+                    &times;
+                </button>
+
+                <UserCreateForm @close="showCreateModal = false" @added="fetchUsers" />
+            </div>
+        </div>
 
         <div v-if="isLoading" class="text-center">Chargement...</div>
         <div v-else-if="error" class="text-red-600 text-center">{{ error }}</div>
@@ -29,7 +47,6 @@
             </tbody>
         </table>
 
-        <!-- Modal d'édition -->
         <div v-if="showModal" class="fixed inset-0 flex items-center justify-center z-50"
             style="background-color: rgba(0, 0, 0, 0.5);">
             <div class="bg-white p-6 rounded shadow w-full max-w-md relative">
@@ -94,6 +111,7 @@
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
 import { useAuthStore } from '@/store/auth'
+import UserCreateForm from '@/components/AjoutUser.vue'
 
 interface User {
     _id: string
@@ -113,6 +131,8 @@ const showDeleteModal = ref(false)
 const userToDelete = ref<string | null>(null)
 
 const authStore = useAuthStore()
+
+const showCreateModal = ref(false)
 
 async function fetchUsers() {
     try {
@@ -183,6 +203,10 @@ async function deleteUserConfirmed() {
         showDeleteModal.value = false
         userToDelete.value = null
     }
+}
+
+function openCreateModal() {
+    showCreateModal.value = true
 }
 
 onMounted(() => {
