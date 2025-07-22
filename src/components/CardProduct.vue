@@ -7,7 +7,9 @@
       <p class="text-indigo-600 font-semibold">{{ product.unitPrice }} {{ product.currency }}</p>
     </div>
     <p class="text-gray-600 mb-2">Référence : {{ product.ref }}</p>
-
+    <div class="absolute bottom-2 right-4 text-sm text-indigo-600 hover:underline" @click="handleCardClick">
+      Voir plus de détails
+    </div>
   </div>
 </template>
 
