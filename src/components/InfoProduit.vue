@@ -11,6 +11,7 @@
             <p class="text-sm text-gray-600 mb-2">Référence : {{ product.ref }}</p>
             <p class="text-sm text-gray-600 mb-2">Catégorie : {{ product.category }}</p>
             <p class="text-sm text-gray-600 mb-2">Unité : {{ product.unit }}</p>
+            <p class="text-sm text-gray-600 mb-2">Stock : {{ product.stock }}</p>
             <p class="text-lg font-semibold mt-3 flex justify-end">
                 <span>Prix : {{ product.unitPrice.toFixed(2) }} {{ product.currency }}</span>
             </p>
@@ -27,15 +28,19 @@ interface Product {
     ref: string
     name: string
     category: string
-    unit: number
+    unit: string
     unitPrice: number
     currency: string
+    stock: number
 }
+
 
 const props = defineProps<{
     product: Product | null
     show: boolean
 }>()
+
+console.log(props.product);
 
 const emits = defineEmits(['close'])
 </script>

@@ -2,10 +2,10 @@
   <div class="bg-white p-4 shadow rounded hover:shadow-lg transition-shadow cursor-pointer relative"  @click="handleCardClick" >
     <!-- Contenu produit -->
     <div class="flex justify-between mb-2">
-      <h3 class="font-bold text-lg">{{ productName }}</h3>
-      <p class="text-indigo-600 font-semibold">{{ unitPrice }} {{ currency }}</p>
+      <h3 class="font-bold text-lg">{{ product.name }}</h3>
+      <p class="text-indigo-600 font-semibold">{{ product.unitPrice }} {{ product.currency }}</p>
     </div>
-    <p class="text-gray-600 mb-2">Référence : {{ productRef }}</p>
+    <p class="text-gray-600 mb-2">Référence : {{ product.ref }}</p>
 
     <!-- Bouton Ajouter au panier -->
     <div class="flex justify-end">
@@ -57,12 +57,16 @@ import { useCartStore } from '@/store/cart'
 import { useAuthStore } from '@/store/auth'
 
 const props = defineProps<{
-  id: string
-  productName: string
-  productRef: string
-  unitPrice: number
-  currency: string
-  unit: number
+   product: {
+    _id: string
+    name: string
+    ref: string
+    category: string
+    unitPrice: number
+    currency: string
+    unit: string
+    stock: number
+  }
 }>()
 
 const emit = defineEmits(['open-info'])
@@ -72,7 +76,7 @@ const isLoggedIn = authStore.isLoggedIn
 
 const showModal = ref(false)
 const quantity = ref(1)
-const maxQuantity = props.unit
+const maxQuantity = props.product.stock
 
 const showSuccessMessage = ref(false)
 
@@ -99,9 +103,9 @@ function decrement() {
 
 function confirmAddToCart() {
   cartStore.addToCart({
-    id: props.id,
-    name: props.productName,
-    price: props.unitPrice,
+    id: props.product._id,
+    name: props.product.name,
+    price: props.product.unitPrice,
     quantity: quantity.value,
   })
 
@@ -112,13 +116,13 @@ function confirmAddToCart() {
 function handleCardClick() {
   if (!showModal.value) {
     emit('open-info', {
-      _id: props.id,
-      name: props.productName,
-      ref: props.productRef,
-      category: '',
-      unitPrice: props.unitPrice,
-      currency: props.currency,
-      unit: props.unit,
+      _id: props.product._id,
+      name: props.product.name,
+      ref: props.product.ref,
+      category: props.product.category,
+      unitPrice: props.product.unitPrice,
+      currency: props.product.currency,
+      unit: props.product.unit,
     })
   }
 }
