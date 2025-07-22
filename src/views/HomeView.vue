@@ -104,7 +104,10 @@ const isLoadingOrders = ref(true)
 const statusOrder = ['En attente', 'En cours', 'Livrée', 'Payée', 'Annulée']
 
 const totalChiffreAffaires = computed(() => {
-  return orders.value.reduce((acc, order) => acc + (order.total ?? 0), 0)
+  const statusValides = ['Livrée', 'Payée', 'En cours']
+  return orders.value
+    .filter(order => statusValides.includes(order.status))
+    .reduce((acc, order) => acc + (order.total ?? 0), 0)
 })
 
 async function fetchUserProfile() {
