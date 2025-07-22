@@ -1,6 +1,14 @@
 <template>
   <div class="max-w-3xl mx-auto mt-10">
-    <h1 class="text-2xl font-bold mb-6 text-center">Historique des commandes</h1>
+    <h1 class="text-3xl font-bold mb-6 text-center">Historique des commandes</h1>
+
+    <!-- Bouton Créer une commande -->
+    <div class="flex justify-end mb-6">
+      <button @click="showCreateOrderModal = true"
+        class="bg-indigo-700 text-white px-4 py-2 rounded hover:bg-indigo-800">
+        Créer une commande
+      </button>
+    </div>
 
     <div v-if="isLoading">Chargement...</div>
 
@@ -54,38 +62,87 @@
         </div>
       </div>
     </div>
-  </div>
 
-  <div v-if="showStatusModal" class="fixed inset-0 flex items-center justify-center z-50"
-    style="background-color: rgba(0, 0, 0, 0.5);">
-    <form @submit.prevent="updateStatus" class="bg-white rounded p-6 w-96">
-      <h3 class="text-xl font-semibold mb-4">Modifier le statut de la commande</h3>
+    <!-- Modal modification statut -->
+    <div v-if="showStatusModal" class="fixed inset-0 flex items-center justify-center z-50"
+      style="background-color: rgba(0, 0, 0, 0.5);">
+      <form @submit.prevent="updateStatus" class="bg-white rounded p-6 w-96">
+        <h3 class="text-xl font-semibold mb-4">Modifier le statut de la commande</h3>
 
-      <select v-model="newStatus" class="w-full p-2 border rounded mb-4" required>
-        <option value="En attente">En attente</option>
-        <option value="Payée">Payée</option>
-        <option value="Annulée">Annulée</option>
-        <option value="Livrée">Livrée</option>
-        <option value="En cours">En cours</option>
-      </select>
+        <select v-model="newStatus" class="w-full p-2 border rounded mb-4" required>
+          <option value="En attente">En attente</option>
+          <option value="Payée">Payée</option>
+          <option value="Annulée">Annulée</option>
+          <option value="Livrée">Livrée</option>
+          <option value="En cours">En cours</option>
+        </select>
 
-      <div class="flex justify-end space-x-4">
-        <button type="button" @click="showStatusModal = false" class="px-4 py-2 border rounded">Annuler</button>
-        <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">Valider</button>
+        <div class="flex justify-end space-x-4">
+          <button type="button" @click="showStatusModal = false" class="px-4 py-2 border rounded">Annuler</button>
+          <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">Valider</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Modal création commande -->
+    <div v-if="showCreateOrderModal" class="fixed inset-0 flex items-center justify-center z-50"
+      style="background-color: rgba(0, 0, 0, 0.5);">
+      <div class="bg-white rounded-lg p-6 max-w-lg w-full overflow-auto max-h-[80vh]">
+        <h2 class="text-xl font-bold mb-4">Créer une nouvelle commande</h2>
+
+        <div class="mb-4">
+          <label class="block font-medium mb-1">Sélectionner un utilisateur</label>
+          <select v-model="selectedUserId" class="w-full border rounded p-2" required>
+            <option value="" disabled>Choisir un utilisateur</option>
+            <option v-for="user in users" :key="user._id" :value="user._id">
+              {{ user.firstname }} {{ user.lastname }}
+            </option>
+          </select>
+        </div>
+
+        <div>
+          <h3 class="font-semibold mb-2">Articles disponibles :</h3>
+          <div v-for="article in articles" :key="article._id" class="flex items-center mb-2 space-x-4">
+            <div class="flex-1">
+              {{ article.name }} : 
+              {{ article.unitPrice?.toFixed(2) }} €
+              (Stock : {{ article.stock }} {{ article.unit }})
+
+            </div>
+            <input type="number" min="0" :max="article.stock" :disabled="article.stock === 0"
+              class="w-20 border rounded p-1" v-model.number="quantities[article._id]" />
+          </div>
+        </div>
+
+        <div class="mt-6 flex justify-end space-x-4">
+          <button @click="showCreateOrderModal = false" type="button"
+            class="px-4 py-2 border rounded hover:bg-gray-100">Annuler</button>
+          <button @click="createOrder" type="button"
+            class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">Valider</button>
+        </div>
+
       </div>
-    </form>
+    </div>
   </div>
 </template>
 
-
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import axios from 'axios'
 import { useAuthStore } from '@/store/auth'
 
 interface UserInfo {
+  _id: string
   firstname: string
   lastname: string
+}
+
+interface Article {
+  _id: string
+  name: string
+  unitPrice: number
+  stock: number
+  unit: string
 }
 
 interface OrderItem {
@@ -102,10 +159,11 @@ interface Order {
   status: string
   createdAt: string
   user: UserInfo
-
 }
 
 const authStore = useAuthStore()
+
+// Données commandes existantes
 const orders = ref<Order[]>([])
 const error = ref('')
 const isLoading = ref(true)
@@ -113,6 +171,14 @@ const showStatusModal = ref(false)
 const selectedOrder = ref<Order | null>(null)
 const newStatus = ref('')
 
+// Données modal création commande
+const showCreateOrderModal = ref(false)
+const users = ref<UserInfo[]>([])
+const articles = ref<Article[]>([])
+const selectedUserId = ref('')
+const quantities = ref<Record<string, number>>({})
+
+// Fetch commandes existantes
 async function fetchOrders() {
   if (!authStore.token) {
     error.value = 'Veuillez vous connecter pour accéder à l’historique de vos commandes.'
@@ -132,6 +198,31 @@ async function fetchOrders() {
     console.error(e)
   } finally {
     isLoading.value = false
+  }
+}
+
+async function fetchUsersAndArticles() {
+  try {
+    const [resUsers, resArticles] = await Promise.all([
+      axios.get('http://localhost:3000/api/users', {
+        headers: { Authorization: `Bearer ${authStore.token}` }
+      }),
+      axios.get('http://localhost:3000/api/products', {
+        headers: { Authorization: `Bearer ${authStore.token}` }
+      }),
+    ])
+
+    users.value = resUsers.data
+    articles.value = resArticles.data
+
+    const initQuantities: Record<string, number> = {}
+    articles.value.forEach(a => {
+      initQuantities[a._id] = 0
+    })
+    quantities.value = initQuantities
+
+  } catch (e) {
+    console.error('Erreur lors du chargement des utilisateurs ou articles', e)
   }
 }
 
@@ -168,29 +259,70 @@ async function updateStatus() {
 async function downloadInvoice(orderId: string) {
   try {
     const response = await axios.get(`http://localhost:3000/api/orders/${orderId}/pdf`, {
-      responseType: 'blob', // important pour recevoir un fichier
+      responseType: 'blob',
       headers: {
         Authorization: `Bearer ${authStore.token}`
       }
-    });
+    })
 
-    const blob = new Blob([response.data], { type: 'application/pdf' });
-    const url = window.URL.createObjectURL(blob);
+    const blob = new Blob([response.data], { type: 'application/pdf' })
+    const url = window.URL.createObjectURL(blob)
 
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `facture-${orderId}.pdf`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', `facture-${orderId}.pdf`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
   } catch (error) {
-    console.error("Erreur lors du téléchargement de la facture :", error);
-    alert("Erreur lors du téléchargement de la facture.");
+    console.error('Erreur lors du téléchargement de la facture :', error)
+    alert('Erreur lors du téléchargement de la facture.')
+  }
+}
+
+async function createOrder() {
+  if (!selectedUserId.value) {
+    alert('Veuillez sélectionner un utilisateur.')
+    return
+  }
+
+  const items = Object.entries(quantities.value)
+    .filter(([_, qty]) => qty > 0)
+    .map(([productId, qty]) => ({
+      productId,
+      stock: qty,
+    }))
+
+  if (items.length === 0) {
+    alert('Veuillez sélectionner au moins un article avec une quantité supérieure à zéro.')
+    return
+  }
+
+  try {
+    await axios.post('http://localhost:3000/api/orders/', {
+      userId: selectedUserId.value,
+      items,
+    }, {
+      headers: { Authorization: `Bearer ${authStore.token}` }
+    })
+
+    alert('Commande créée avec succès !')
+    showCreateOrderModal.value = false
+    fetchOrders()
+  } catch (e) {
+    console.error('Erreur lors de la création de la commande', e)
+    alert('Erreur lors de la création de la commande.')
   }
 }
 
 onMounted(() => {
   fetchOrders()
+})
+
+watch(showCreateOrderModal, (visible) => {
+  if (visible) {
+    fetchUsersAndArticles()
+  }
 })
 </script>

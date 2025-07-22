@@ -60,9 +60,10 @@ interface Product {
   name: string
   ref: string
   category: string
-  unitPrice: number
-  currency: string
   unit: string
+  currency: string
+  unitPrice: number
+  billingFrequency?: string
   stock: number
 }
 
@@ -106,11 +107,19 @@ onMounted(() => {
 
 const productsByCategory = computed(() => {
   const grouped: Record<string, Product[]> = {}
+
   for (const product of products.value) {
-    const cat = product.category || 'Autre'
-    if (!grouped[cat]) grouped[cat] = []
-    grouped[cat].push(product)
+    console.log(product)
+    const catName =
+      typeof product.category === 'object' && product.category !== null
+        ? product.category
+        : product.category || 'Autre'
+
+    if (!grouped[catName]) grouped[catName] = []
+    grouped[catName].push(product)
   }
+
   return grouped
 })
+
 </script>
