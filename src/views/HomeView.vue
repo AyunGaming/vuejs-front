@@ -15,7 +15,7 @@
       <div v-else class="grid grid-cols-1 sm:grid-cols-3 gap-6">
         <div v-for="product in products" :key="product._id" class="border rounded p-4 shadow-sm">
           <div class="flex justify-between items-center mb-2">
-            <h3 class="font-semibold">{{ product.name }}</h3>
+            <h3 class="font-semibold whitespace-nowrap overflow-hidden text-ellipsis max-w-[70%]" :title="product.name">{{ product.name }}</h3>
             <span class="text-sm text-gray-500">Réf : {{ product.ref }}</span>
           </div>
           <p class="font-bold">

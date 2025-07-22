@@ -6,7 +6,7 @@
 
             <img src="../assets/produit_image.jpg" alt="Produit" class="rounded mb-6 w-100 h-50 object-cover" />
 
-            <h2 class="text-2xl font-bold mb-6 text-center">{{ product.name }}</h2>
+            <h2 class="text-2xl font-bold mb-6 text-center line-clamp-2 overflow-hidden" :title="product.name">{{ product.name }}</h2>
             <h3 class="text-ml text-black font-bold mb-2">Details :</h3>
             <p class="text-sm text-gray-600 mb-2">Référence : {{ product.ref }}</p>
             <p class="text-sm text-gray-600 mb-2">Catégorie : {{ product.category }}</p>
