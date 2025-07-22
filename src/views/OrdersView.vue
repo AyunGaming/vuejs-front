@@ -143,7 +143,6 @@
               {{ article.name }} :
               {{ article.unitPrice?.toFixed(2) }} €
               (Stock : {{ article.stock }} {{ article.unit }})
-
             </div>
             <input type="number" min="0" :max="article.stock" :disabled="article.stock === 0"
               class="w-20 border rounded p-1" v-model.number="quantities[article._id]" />
