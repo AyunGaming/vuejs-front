@@ -24,23 +24,23 @@
 import { defineProps, defineEmits } from 'vue'
 
 interface Product {
-    _id: string
-    ref: string
-    name: string
-    category: string
-    unit: string
-    unitPrice: number
-    currency: string
-    stock: number
+  _id: string
+  name: string
+  ref: string
+  category: string
+  unit: string
+  currency: string
+  unitPrice: number
+  billingFrequency?: string
+  stock: number
 }
+
 
 
 const props = defineProps<{
     product: Product | null
     show: boolean
 }>()
-
-console.log(props.product);
 
 const emits = defineEmits(['close'])
 </script>
