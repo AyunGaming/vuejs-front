@@ -7,7 +7,7 @@
     <div v-else-if="error" class="text-red-600 text-center">{{ error }}</div>
 
     <div v-else>
-      <div v-if="orders.length === 0" class="text-gray-500">Vous n’avez aucune commande.</div>
+      <div v-if="orders.length === 0" class="text-gray-500 text-center">Vous n’avez aucune commande.</div>
 
       <div v-for="order in orders" :key="order._id" class="border rounded p-4 mb-6">
         <div class="flex justify-between items-center mb-2">
@@ -43,10 +43,13 @@
           </div>
         </div>
 
-        <div v-if="authStore.isAdmin" class="mt-3 text-right">
+        <div v-if="authStore.isAdmin" class="mt-3 flex flex-col gap-2">
           <button @click="openStatusModal(order)"
-            class="px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700">
+            class="self-end px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 w-40">
             Modifier le statut
+          </button>
+          <button @click="downloadInvoice(order._id)" class="self-start text-indigo-700 hover:underline font-medium">
+            Télécharger la facture
           </button>
         </div>
       </div>
@@ -159,6 +162,31 @@ async function updateStatus() {
   } catch (err) {
     alert('Erreur lors de la mise à jour du statut')
     console.error(err)
+  }
+}
+
+async function downloadInvoice(orderId: string) {
+  try {
+    const response = await axios.get(`http://localhost:3000/api/orders/${orderId}/pdf`, {
+      responseType: 'blob', // important pour recevoir un fichier
+      headers: {
+        Authorization: `Bearer ${authStore.token}`
+      }
+    });
+
+    const blob = new Blob([response.data], { type: 'application/pdf' });
+    const url = window.URL.createObjectURL(blob);
+
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `facture-${orderId}.pdf`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error("Erreur lors du téléchargement de la facture :", error);
+    alert("Erreur lors du téléchargement de la facture.");
   }
 }
 
