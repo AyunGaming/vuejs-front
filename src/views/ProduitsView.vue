@@ -132,6 +132,11 @@ function openProductInfo(product: Product) {
 }
 
 function editProduct(product: Product) {
+  if (!authStore.isLoggedIn) {
+    alert("Veuillez vous connecter pour modifier un produit")
+    return
+  }
+  
   productToEdit.value = product
   showEditForm.value = true
   showAddForm.value = false
@@ -140,6 +145,11 @@ function editProduct(product: Product) {
 }
 
 function confirmDeleteProduct(product: Product) {
+  if (!authStore.isLoggedIn) {
+    alert("Veuillez vous connecter pour supprimer un produit")
+    return
+  }
+  
   productToDelete.value = product
   showDeleteConfirm.value = true
   showAddForm.value = false
