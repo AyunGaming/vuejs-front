@@ -105,7 +105,7 @@
     <!-- Modal création commande -->
     <div v-if="showCreateOrderModal" class="fixed inset-0 flex items-center justify-center z-50"
       style="background-color: rgba(0, 0, 0, 0.5);">
-      <PasserCommande :users="users" @close="showCreateOrderModal = false"></PasserCommande>
+      <PasserCommande :users="users" @orderCreated="handleOrderCreated" @close="showCreateOrderModal = false"></PasserCommande>
     </div>
   </div>
 </template>
@@ -185,6 +185,10 @@ function goToPage(page: number) {
   }
 }
 
+const handleOrderCreated = () => {
+  fetchOrders()
+  showCreateOrderModal.value = false
+}
 
 async function fetchOrders() {
   if (!authStore.token) {
