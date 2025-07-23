@@ -124,7 +124,7 @@ const articles = ref<Article[]>([])
 const selectedUserId = ref('')
 const useExistingBilling = ref(true)
 const sameAsBilling = ref(true)
-const emit = defineEmits(['close'])
+const emit = defineEmits(['close', 'orderCreated'])
 
 const billingAddress = ref({
     street: '',
@@ -219,6 +219,7 @@ async function createOrder() {
 
         alert('Commande créée avec succès')
         showModal.value = false
+        emit('orderCreated')
         emit('close')
     } catch (e) {
         console.error(e)
