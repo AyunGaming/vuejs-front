@@ -3,7 +3,7 @@
     <h1 class="text-3xl font-bold mb-6 text-center">Historique des commandes</h1>
 
     <!-- Bouton Créer une commande -->
-    <div class="flex justify-end mb-6">
+    <div v-if="authStore.isLoggedIn && authStore.isAdmin" class="flex justify-end mb-6">
       <button @click="showCreateOrderModal = true"
         class="bg-indigo-700 text-white px-4 py-2 rounded hover:bg-indigo-800">
         Créer une commande
