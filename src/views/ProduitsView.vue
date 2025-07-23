@@ -132,8 +132,8 @@ function openProductInfo(product: Product) {
 }
 
 function editProduct(product: Product) {
-  if (!authStore.isLoggedIn) {
-    alert("Veuillez vous connecter pour modifier un produit")
+  if (!authStore.isAdmin) {
+    alert("Seuls les administrateurs peuvent modifier un produit")
     return
   }
   
@@ -145,8 +145,8 @@ function editProduct(product: Product) {
 }
 
 function confirmDeleteProduct(product: Product) {
-  if (!authStore.isLoggedIn) {
-    alert("Veuillez vous connecter pour supprimer un produit")
+  if (!authStore.isAdmin) {
+    alert("Seuls les administrateurs peuvent supprimer un produit")
     return
   }
   
